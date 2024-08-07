@@ -1,0 +1,61 @@
+/*
+ * Smart Home Automation Using PIR Sensor
+ * Components:
+ * - PIR sensor
+ * - LED lights
+ * - Piezo buzzer
+ * - Arduino Uno R3
+ */
+
+const int pirSensorPin = 2;    // PIR sensor input pin
+const int ledPin = 13;         // LED output pin
+const int buzzerPin = 9;       // Piezo buzzer pin
+const long inactiveDuration = 60000; // Time in milliseconds to turn off lights (1 minute)
+
+unsigned long lastMotionDetected = 0; // Timestamp of the last motion detected
+
+void setup() {
+  pinMode(pirSensorPin, INPUT);    // Set PIR sensor pin as input
+  pinMode(ledPin, OUTPUT);         // Set LED pin as output
+  pinMode(buzzerPin, OUTPUT);      // Set buzzer pin as output
+
+  Serial.begin(9600);              // Initialize serial communication for debugging
+  Serial.println("Smart Home Automation System Initialized");
+}
+
+void loop() {
+  int pirState = digitalRead(pirSensorPin);  // Read PIR sensor state
+
+  if (pirState == HIGH) {
+    // Motion detected
+    digitalWrite(ledPin, HIGH);  // Turn on LED
+    lastMotionDetected = millis();  // Update the last motion detected timestamp
+
+    Serial.println("Motion detected. Lights ON.");
+  } else {
+    // No motion detected
+    if (millis() - lastMotionDetected >= inactiveDuration) {
+      digitalWrite(ledPin, LOW);  // Turn off LED if inactive for the defined duration
+      Serial.println("No motion detected for a while. Lights OFF.");
+    }
+  }
+
+  // Security Alert: Trigger buzzer if motion is detected during unusual hours
+  // Assuming unusual hours are between 12 AM to 6 AM
+  int currentHour = hour(); // Requires RTC module or real-time clock implementation
+  if (pirState == HIGH && (currentHour >= 0 && currentHour < 6)) {
+    tone(buzzerPin, 1000);  // Activate buzzer with 1000 Hz frequency
+    delay(1000);            // Buzzer on for 1 second
+    noTone(buzzerPin);      // Turn off buzzer
+
+    Serial.println("Security Alert: Motion detected during unusual hours!");
+  }
+
+  delay(500);  // Delay for half a second before next loop iteration
+}
+
+int hour() {
+  // Dummy function to simulate real-time clock hour reading
+  // Replace this with actual RTC module code to get the current hour
+  return 1;  // Simulated current hour
+}
